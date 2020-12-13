@@ -37,27 +37,28 @@ def app():
     st.write("### File tree")
     st.text(display_tree("data/jwtd", string_rep=True))
 
+    # Settings
     st.sidebar.write("## Display settings")
     cols = st.sidebar.multiselect(
         "Filter columns", list(df_train.columns), default=list(df_train.columns),
     )
     n_data = st.sidebar.selectbox(
-        "Max display rows: ", options=[1, 2, 3, 5, 10, 100], index=3
+        "Max display rows: ", options=[1, 2, 3, 5, 10], index=3
     )
 
     button_placeholder = st.sidebar.empty()
-    query = st.sidebar.text_input("query", value="")
+    query = st.sidebar.text_input("Query (approximate)", value="")
     st.sidebar.info(
         "Query syntax is based on pandas.query, e.g. category=='kanji-conversion', post_text.str.contains('キャンパス')"
     )
 
+    # Browser
     st.write("## Browse Train Dataset")
 
     if query:
-        with st.spinner(
-            "Query need whole dataset access and slow down browsing. To speed up, remove all queries."
-        ):
-            df_view = df_train.query(query, engine="python").compute()
+        df_view = df_train.head(n=10000, npartitions=df_train.npartitions // 50).query(
+            query, engine="python"
+        )  # approximated query
     else:
         df_view = df_train
     df_view = df_view[cols]
@@ -66,6 +67,7 @@ def app():
         df_view = df_view.sample(frac=1 / n_data)
     st.table(df_view.head(n_data))
 
+    # Stats
     st.write("## Stats")
 
     @st.cache
