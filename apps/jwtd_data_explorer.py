@@ -55,17 +55,19 @@ def app():
     # Browser
     st.write("## Browse Train Dataset")
 
-    if query:
-        df_view = df_train.head(n=10000, npartitions=df_train.npartitions // 50).query(
-            query, engine="python"
-        )  # approximated query
-    else:
-        df_view = df_train
-    df_view = df_view[cols]
+    @st.cache
+    def sample_dataset(df):
+        return df.sample(frac=0.01).compute()
 
-    if button_placeholder.button("Random Sampling"):
-        df_view = df_view.sample(frac=1 / n_data)
-    st.table(df_view.head(n_data))
+    df_sampled = sample_dataset(df_train).copy()
+
+    if query:
+        df_view = df_sampled.query(query, engine="python")  # approximated query
+    else:
+        df_view = df_sampled
+
+    button_placeholder.button("Random Sampling")
+    st.table(df_view[cols].sample(frac=1).head(n=n_data))
 
     # Stats
     st.write("## Stats")
