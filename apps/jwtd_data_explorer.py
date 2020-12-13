@@ -2,6 +2,7 @@ import shutil
 import tarfile
 from pathlib import Path
 
+import dask.dataframe as dd
 import pandas as pd
 import streamlit as st
 from directory_tree import display_tree
@@ -25,7 +26,7 @@ def app():
 
     @st.cache
     def load_dataframe(path):
-        return pd.read_json(path, lines=True, orient="records")
+        return dd.read_json(path, lines=True, orient="records")
 
     df_train = load_dataframe("data/jwtd/train.jsonl")
 
@@ -52,10 +53,10 @@ def app():
     df_view = df_view[cols]
 
     if st.sidebar.button("Shuffle Table"):
-        df_view = df_view.sample(n=n_data)
+        df_view = df_view.sample(frac=1 / n_data)
     st.table(df_view.head(n=n_data))
 
     st.write("### Stats")
     st.write("Categories")
-    st.write(df_train.category.value_counts())
-    st.write(df_train.describe())
+    st.write(df_train.category.value_counts().compute())
+    st.write(df_train.describe().compute())
