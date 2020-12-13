@@ -22,7 +22,8 @@ def app():
             with tarfile.open(fileobj=f) as tar:
                 tar.extractall("data")
 
-    download_data()
+    with st.spinner("Donwloading Dataset..."):
+        download_data()
 
     # ここでキャッシュすることで、df_trainなどがリロードしても同一のオブジェクトになり、
     # df_trainを参照している関数のキャッシュがうまく動くようになる
