@@ -48,9 +48,13 @@ def app():
 
     button_placeholder = st.sidebar.empty()
     query = st.sidebar.text_input("Query (approximate)", value="")
-    st.sidebar.info(
-        "Query syntax is based on pandas.query, e.g. category=='kanji-conversion', post_text.str.contains('キャンパス')"
-    )
+    with st.sidebar.beta_expander("Query exmaples"):
+        st.markdown(
+            """
+            * category=='kanji-conversion'
+            * post_text.str.contains('キャンパス')"""
+        )
+    st.sidebar.info("Query syntax is based on pandas.query")
 
     # Browser
     st.write("## Browse Train Dataset")

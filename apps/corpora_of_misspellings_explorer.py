@@ -30,7 +30,7 @@ def app():
         df = download_data()
 
     st.write("birkbeck.dat, 36,133 misspellings of 6,136 word")
-    st.write(df)
+    st.write(df.head(n=100))
 
     st.write("$America の後に Americaのタイポが並ぶようなデータ形式になっている")
     st.write(

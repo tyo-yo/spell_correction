@@ -42,7 +42,7 @@ def app():
     n_rows = st.sidebar.selectbox("Donwload rows: ", options=[1000, 10000], index=0)
 
     n_display = st.sidebar.selectbox(
-        "Display rows: ", options=[1, 2, 5, 10, 100], index=2
+        "Display rows: ", options=[1, 2, 5, 10, 100], index=3
     )
 
     df = download_dataframe(n_rows)
@@ -53,9 +53,17 @@ def app():
 
     st.sidebar.button("Random Sampling")
     query = st.sidebar.text_input("Query (approximate)", value="")
-    st.sidebar.info(
-        "Query syntax is based on pandas.query, e.g. src_lang != 'eng' , 5 < src_ppl < 10, not src_text.str.contains('\\\.')"
-    )
+    with st.sidebar.beta_expander("Query exmaples"):
+        st.markdown(
+            """
+        * src_lang != 'eng'
+        * 5 < src_ppl < 10
+        * not src_text.str.contains('\\\.')
+        * src_path.str.contains('.txt')
+        """
+        )
+    st.sidebar.info("Query syntax is based on pandas.query")
+
     if query:
         df = df.query(query, engine="python")
 
