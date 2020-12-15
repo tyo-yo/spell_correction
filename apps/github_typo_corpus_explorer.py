@@ -54,7 +54,7 @@ def app():
     )
 
     st.sidebar.button("Random Sampling")
-    query = st.sidebar.text_input("Query (approximate)", value="")
+    query = st.sidebar.text_input("Query (approximate)", value="", key="github_typo")
     with st.sidebar.beta_expander("Query exmaples"):
         st.markdown(
             """

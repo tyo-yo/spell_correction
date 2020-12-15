@@ -48,7 +48,7 @@ def app():
     )
 
     button_placeholder = st.sidebar.empty()
-    query = st.sidebar.text_input("Query (approximate)", value="")
+    query = st.sidebar.text_input("Query (approximate)", value="", key="jwtd")
     with st.sidebar.beta_expander("Query exmaples"):
         st.markdown(
             """
