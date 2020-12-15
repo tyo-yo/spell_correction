@@ -4,11 +4,11 @@ import streamlit as st
 
 
 def app():
-    st.write("## Input")
+    st.write("### Input")
     str1 = st.text_area("Original Sentence", "This is orignal sentence.")
     str2 = st.text_area("New Sentence", "That is new sentence.")
     res = visualize_chardiff(str1, str2)
-    st.markdown("## Diffs")
+    st.markdown("### Diffs")
     st.markdown(
         res, unsafe_allow_html=True,
     )
