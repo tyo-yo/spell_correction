@@ -6,6 +6,7 @@ import dask
 import dask.dataframe as dd
 import pandas as pd
 import streamlit as st
+from chardiff_html import chardiff_html
 from directory_tree import display_tree
 from smart_open import open
 
@@ -52,7 +53,8 @@ def app():
         st.markdown(
             """
             * category=='kanji-conversion'
-            * post_text.str.contains('キャンパス')"""
+            * post_text.str.contains('キャンパス')
+            """
         )
     st.sidebar.info("Query syntax is based on pandas.query")
 
@@ -71,7 +73,15 @@ def app():
         df_view = df_sampled
 
     button_placeholder.button("Random Sampling")
-    st.table(df_view[cols].sample(frac=1).head(n=n_data))
+
+    df_view = df_view.sample(frac=1).head(n=n_data)
+    st.table(df_view[cols])
+
+    st.write("### Diffs")
+    for _, row in df_view.iterrows():
+        st.markdown(
+            chardiff_html(row.pre_text, row.post_text), unsafe_allow_html=True,
+        )
 
     # Stats
     st.write("## Stats")

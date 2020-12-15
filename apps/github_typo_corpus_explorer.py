@@ -1,4 +1,5 @@
 import json
+import re
 import shutil
 import tarfile
 from pathlib import Path
@@ -7,6 +8,7 @@ import dask
 import dask.dataframe as dd
 import pandas as pd
 import streamlit as st
+from chardiff_html import chardiff_html
 from directory_tree import display_tree
 from smart_open import open
 
@@ -67,5 +69,10 @@ def app():
     if query:
         df = df.query(query, engine="python")
 
-    st.table(df[cols].sample(n=n_display))
+    df = df.sample(n=n_display)
+    st.table(df[cols])
 
+    st.write("## Diffs \n ---")
+    for _, row in df.iterrows():
+        diff = chardiff_html(row.src_text, row.tgt_text)
+        st.markdown(diff, unsafe_allow_html=True)
