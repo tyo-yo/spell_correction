@@ -11,6 +11,7 @@ smart_open = "^4.0.1"
 directory_tree = "^0.0.2"
 dask = {extras = ["complete"], version = "^2020.12.0"}
 flatten-dict = "^0.3.0"
+chardiff_html = "^0.1.1"
 
 [tool.poetry.dev-dependencies]
 

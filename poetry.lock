@@ -165,6 +165,14 @@ version = "3.0.4"
 
 [[package]]
 category = "main"
+description = ""
+name = "chardiff-html"
+optional = false
+python-versions = ">=3.7,<4.0"
+version = "0.1.1"
+
+[[package]]
+category = "main"
 description = "Composable command line interface toolkit"
 name = "click"
 optional = false
@@ -1266,7 +1274,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["pytest (>=3.5,<3.7.3 || >3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pytest-cov", "jaraco.test (>=3.2.0)", "jaraco.itertools", "func-timeout", "pytest-black (>=0.3.7)", "pytest-mypy"]
 
 [metadata]
-content-hash = "14fd34b20c508f6781421a9d94be88e76498105ec92b593176566e4330e5ef7d"
+content-hash = "14d9de35badd588bc97edb37ea52dbb89916214e4d90db6fae7c27c9ccb52ecb"
 lock-version = "1.0"
 python-versions = "3.7.6"
 
@@ -1376,6 +1384,10 @@ cffi = [
 chardet = [
     {file = "chardet-3.0.4-py2.py3-none-any.whl", hash = "sha256:fc323ffcaeaed0e0a02bf4d117757b98aed530d9ed4531e3e15460124c106691"},
     {file = "chardet-3.0.4.tar.gz", hash = "sha256:84ab92ed1c4d4f16916e05906b6b75a6c0fb5db821cc65e70cbd64a3e2a5eaae"},
+]
+chardiff-html = [
+    {file = "chardiff_html-0.1.1-py3-none-any.whl", hash = "sha256:d7efc74329325d9cc7def5eac2ea24536d98dbe131b18dfa54993d7989259f5c"},
+    {file = "chardiff_html-0.1.1.tar.gz", hash = "sha256:d1e2522e741ca7f5e64fda198055aef5120f7cf7f48576a2c4aac66812d10d85"},
 ]
 click = [
     {file = "click-7.1.2-py2.py3-none-any.whl", hash = "sha256:dacca89f4bfadd5de3d7489b7c8a566eee0d3676333fbb50030263894c38c0dc"},
