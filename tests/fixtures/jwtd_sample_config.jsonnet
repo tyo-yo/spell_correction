@@ -69,7 +69,7 @@ local batch_size = 2;
   },
   "trainer": {
     "num_epochs": 10,
-    "patience": 2,
+    "patience": 5,
     "cuda_device": cuda_device,
     "grad_norm": 5.0,
     "grad_clipping": null,
