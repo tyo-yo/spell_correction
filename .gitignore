@@ -1,4 +1,8 @@
-data/
+data
+notebooks/tmp.ipynb
+experiments
+
+!.gitkeep
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
