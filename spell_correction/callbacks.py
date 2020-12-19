@@ -1,10 +1,11 @@
-import os
-import socket
+import json
+from pathlib import Path
 from typing import Text
 
 import comet_ml
-import toml
+from allennlp.models.archival import CONFIG_NAME
 from allennlp.training import TrainerCallback
+from flatten_dict import flatten
 
 
 @TrainerCallback.register("log_to_comet")
@@ -31,6 +32,13 @@ class LogToComet(TrainerCallback):
         self._experiment.add_tag("COMPLETED")
 
     def on_epoch(self, trainer, metrics, epoch, is_master):
-        if epoch >= 0:
+        if epoch == -1:
+            with (trainer._serialization_dir / Path(CONFIG_NAME)).open(
+                encoding="utf-8"
+            ) as f:
+                config_dict = json.load(f)
+            for key, val in flatten(config_dict).items():
+                self._experiment.log_parameter(key, val)
+        elif epoch >= 0:
             for key, val in metrics.items():
                 self._experiment.log_metric(f"{key}", val, epoch=epoch + 1)
