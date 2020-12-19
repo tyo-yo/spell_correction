@@ -1,4 +1,9 @@
-data/
+data
+notebooks/tmp.ipynb
+*.th
+*.tar.gz
+events.out.*
+!.gitkeep
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
