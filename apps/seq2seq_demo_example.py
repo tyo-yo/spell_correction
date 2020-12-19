@@ -19,7 +19,10 @@ def app():
     st.write("### Input")
     input_sentence = st.text_area("Input Sentence", "これが正されるのは、江戸時代に本居宣長の登場してからのことである。")
 
-    predictor = load_model("experiments/jwtd_test/0000_cpu/model.tar.gz")
+    archive_path = st.sidebar.selectbox(
+        label="Select Model", options=["experiments/jwtd_test/0000_cpu/model.tar.gz"]
+    )
+    predictor = load_model(archive_path)
     output_json = predictor.predict(input_sentence)
     output_sentence = "".join(output_json["predicted_tokens"])
 
