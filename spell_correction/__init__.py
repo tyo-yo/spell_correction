@@ -1,1 +1,1 @@
-
+from spell_correction.predictor import JaSeq2SeqPredictor

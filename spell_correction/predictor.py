@@ -18,6 +18,7 @@ def japanese_predictor(cls):
 
     setattr(cls, "load_line", load_line)
     setattr(cls, "dump_line", dump_line)
+    return cls
 
 
 @japanese_predictor
@@ -31,3 +32,5 @@ class JaSeq2SeqPredictor(Predictor):
         source = json_dict["source"]
         return self._dataset_reader.text_to_instance(source)
 
+    def predict(self, source: str) -> JsonDict:
+        return self.predict_json({"source": source})
