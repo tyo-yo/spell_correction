@@ -94,7 +94,8 @@ local batch_size = 2;
     "trainer_callbacks": [
       {
         "type": "log_to_comet",
-        "project_name": "jwtd_test"
+        "project_name": "jwtd_test",
+        "upload_serialization_dir": true
       },
     ],
     // "learning_rate_scheduler": {
