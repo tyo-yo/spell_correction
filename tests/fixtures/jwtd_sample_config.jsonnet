@@ -91,6 +91,13 @@ local batch_size = 2;
         "histogram_interval": 10000, # null
         "should_log_learning_rate": true,
     },
+    "trainer_callbacks": [
+      {
+        "type": "log_to_comet",
+        "project_name": "jwtd_test",
+        "upload_serialization_dir": true
+      },
+    ],
     // "learning_rate_scheduler": {
     //   "type": "noam",
     //   "factor": 1,

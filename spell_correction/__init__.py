@@ -1,1 +1,2 @@
+from spell_correction.callbacks import LogToComet
 from spell_correction.predictor import JaSeq2SeqPredictor

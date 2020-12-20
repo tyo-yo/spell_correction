@@ -3,6 +3,7 @@ notebooks/tmp.ipynb
 *.th
 *.tar.gz
 events.out.*
+experiments/*
 !.gitkeep
 
 # Byte-compiled / optimized / DLL files
