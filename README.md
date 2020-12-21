@@ -7,6 +7,9 @@
 ### Using Docker (Recommended)
 1. You should set up your .env file
 2. Use Docker
+   * To use gpus, [you should install NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#setting-up-nvidia-container-toolkit)
+      * c.f. https://medium.com/nvidiajapan/nvidia-docker-って今どうなってるの-20-09-版-558fae883f44
+
 
 ```shell
 docker build . -t spell_correction
@@ -14,6 +17,12 @@ docker build . -t spell_correction
 docker run --rm -it -v $PWD:/app -p 11111:11111 --env-file .env --gpus all spell_correction bash
 docker run --rm -it -v $PWD:/app -p 11111:11111 --env-file .env --gpus all spell_correction streamlit run --server.port 11111 app.py
 docker run --rm -it -v $PWD:/app -p 11111:11111 --env-file .env --gpus all spell_correction jupyter lab --port=11111 --ip=0.0.0.0 --no-browser --allow-root
+
+
+docker run -d -it -v $PWD:/app --env-file .env --gpus all spell_correction bash
+docker ps
+docker attach [docker container id]
+# Detach: Ctrl + Q
 ```
 
 ### Local Env
