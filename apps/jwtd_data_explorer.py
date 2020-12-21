@@ -93,12 +93,16 @@ def app():
             df_test.size,
             df_train.category.value_counts(),
             df_train.describe(),
+            df_train.post_text.str.len().describe()
         )
 
-    n_train, n_test, category_stats, num_stats = calc_stats()
+    n_train, n_test, category_stats, num_stats, train_len_stats = calc_stats()
 
     st.write(f"Train data size: {n_train}, Test data size: {n_test}")
     st.write("Categories")
 
     st.write(category_stats)
     st.write(num_stats)
+
+    st.write('Training sequence length info')
+    st.write(train_len_stats)
