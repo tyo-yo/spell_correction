@@ -1,7 +1,7 @@
 local cuda_device = -1;
 
 local hidden_dim = 500;
-local max_len = 64;
+local max_len = 100;
 local num_layers = 2;
 local dropout = 0.1;
 local bidirectional = true;
@@ -116,7 +116,7 @@ local batch_size = 50;
       "num_workers": 8,
   },
   "vocabulary": {
-      "max_vocab_size": 30000
+      "max_vocab_size": 10000
     // "type": "from_files",
     // "directory": "experiments/jwtd/vocab/mecab"
   }
