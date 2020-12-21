@@ -1,20 +1,22 @@
-local hidden_dim = 64;
+local cuda_device = -1;
+
+local hidden_dim = 500;
 local max_len = 64;
-local num_layers = 1;
-local dropout = 0.0;
+local num_layers = 2;
+local dropout = 0.1;
 local bidirectional = true;
-local batch_size = 32;
+local batch_size = 50;
+
 
 {
   "dataset_reader": {
     "type": "seq2seq",
+    "lazy": true,
     "source_tokenizer": {
-        "type": "spacy",
-        "language": "ja_core_news_sm"
+        "type": "mecab"
     },
     "target_tokenizer": {
-        "type": "spacy",
-        "language": "ja_core_news_sm"
+        "type": "mecab"
     },
     "source_max_tokens": max_len,
     "target_max_tokens": max_len,
@@ -35,10 +37,11 @@ local batch_size = 32;
         }
       }
     },
+    "tied_source_embedder_key": "tokens",
     "encoder": {
       "type": "lstm",
       "input_size": hidden_dim,
-      "hidden_size": hidden_dim,
+      "hidden_size": hidden_dim / 2,
       "num_layers": num_layers,
       "bidirectional": bidirectional
     },
@@ -48,13 +51,16 @@ local batch_size = 32;
       "target_embedder": {
          "embedding_dim": hidden_dim
       },
-      "target_namespace": "target_tokens",
+      "target_namespace": "tokens",
       "tie_output_embedding": true,
       "beam_size": 4,
       "tensor_based_metric": {
         "type": "bleu"
       },
-      "token_based_metric": null,
+      "token_based_metric": {
+        "type": "levenshtein_distance",
+        "avg_by_seq_len": false
+      },
       /* "label_smoothing_ratio": 0.1, */
       "decoder_net": {
         "type": "lstm_cell",
@@ -65,24 +71,34 @@ local batch_size = 32;
   },
   "trainer": {
     "num_epochs": 10,
-    "patience": 2,
-    "cuda_device": -1,
-    "num_serialized_models_to_keep": 1,
+    "patience": 5,
+    "cuda_device": cuda_device,
     "grad_norm": 5.0,
     "grad_clipping": null,
-    "validation_metric": "+BLEU",
-    "summary_interval": 100, # 100
-    "histogram_interval": 10000, # null
-    "should_log_learning_rate": true,
+    "validation_metric": "-LevenshteinDistance",
+    "use_amp": false,
     "optimizer": {
       "type": "adam",
-      "eps": 1e-9,
-      "betas": [
-        0.9,
-        0.98
-      ],
-      "weight_decay": 0.01 # 0.01
+      "lr": 1e-3,
     },
+    "checkpointer": {
+        "num_serialized_models_to_keep": 5,
+    },
+    "tensorboard_writer": {
+        "summary_interval": 100, # 100
+        "histogram_interval": 10000, # null
+        "should_log_learning_rate": true,
+    },
+    "trainer_callbacks": [
+      {
+        "type": "log_to_comet",
+        "project_name": "jwtd",
+        "upload_serialization_dir": true,
+        "log_interval": 100,
+        "log_batch_output": true,
+        "send_notification": true
+      },
+    ],
     // "learning_rate_scheduler": {
     //   "type": "noam",
     //   "factor": 1,
@@ -92,14 +108,15 @@ local batch_size = 32;
   },
   "data_loader": {
       "type": "pytorch_dataloader",
-      "batch_size": batch_size,
-      "sampler": {
+      "batch_sampler": {
         "type": "bucket",
-        "sorting_keys": [["source_tokens", "num_tokens"]],
+        "batch_size": batch_size,
+        "sorting_keys": ["source_tokens", "target_tokens"],
       },
+      "num_workers": 8,
   },
-//   "vocabulary": {
-//     "directory_path": "data/vocabulary",
-//     "extend": true
-//   }
+  // "vocabulary": {
+  //   "type": "from_files",
+  //   "directory": "experiments/jwtd/vocab/mecab"
+  // }
 }
