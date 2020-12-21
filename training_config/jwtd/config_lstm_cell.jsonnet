@@ -1,11 +1,11 @@
 local cuda_device = 0;
 
 local hidden_dim = 500;
-local max_len = 64;
+local max_len = 100;
 local num_layers = 2;
 local dropout = 0.1;
 local bidirectional = true;
-local batch_size = 50;
+local batch_size = 48;
 
 local bucket = "https://storage.googleapis.com/tyoyo";
 
@@ -117,7 +117,7 @@ local bucket = "https://storage.googleapis.com/tyoyo";
   },
   "vocabulary": {
     "type": "from_files",
-    "directory": bucket + "/experiments/jwtd/premade-vocabs/mecab.tar.gz",
+    "directory": bucket + "/experiments/jwtd/premade-vocabs/mecab-30k.tar.gz",
     // "extend": true
   }
 }
