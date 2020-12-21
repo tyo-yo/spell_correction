@@ -7,7 +7,7 @@ local dropout = 0.1;
 local bidirectional = true;
 local batch_size = 50;
 
-local bucket = "https://storage.googleapis.com/tyoyo"
+local bucket = "https://storage.googleapis.com/tyoyo";
 
 {
   "dataset_reader": {
@@ -117,7 +117,7 @@ local bucket = "https://storage.googleapis.com/tyoyo"
   },
   "vocabulary": {
     "type": "from_files",
-    "directory": bucket + "/experiments/jwtd/premade-vocabs/mecab.tar.gz"
+    "directory": bucket + "/experiments/jwtd/premade-vocabs/mecab.tar.gz",
     // "extend": true
   }
 }
