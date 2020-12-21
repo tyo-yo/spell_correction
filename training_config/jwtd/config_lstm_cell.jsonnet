@@ -7,18 +7,17 @@ local dropout = 0.1;
 local bidirectional = true;
 local batch_size = 50;
 
+local bucket = "https://storage.googleapis.com/tyoyo"
 
 {
   "dataset_reader": {
     "type": "seq2seq",
-    "lazy": true,
+    "lazy": false,
     "source_tokenizer": {
-        "type": "spacy",
-        "language": "ja_core_news_sm"
+        "type": "mecab"
     },
     "target_tokenizer": {
-        "type": "spacy",
-        "language": "ja_core_news_sm"
+        "type": "mecab"
     },
     "source_max_tokens": max_len,
     "target_max_tokens": max_len,
@@ -26,8 +25,8 @@ local batch_size = 50;
     "start_symbol": "STARTSYMBOL",
     "end_symbol": "ENDSYMBOL",
   },
-  "train_data_path": "https://storage.googleapis.com/tyoyo/jwtd/v1.0/train.tsv",
-  "validation_data_path": "https://storage.googleapis.com/tyoyo/jwtd/v1.0/dev.tsv",
+  "train_data_path": bucket + "/jwtd/v1.0/train.tsv",
+  "validation_data_path": bucket + "/jwtd/v1.0/dev.tsv",
   "model": {
     "type": "composed_seq2seq",
     "source_text_embedder": {
@@ -84,7 +83,7 @@ local batch_size = 50;
       "lr": 1e-3,
     },
     "checkpointer": {
-        "num_serialized_models_to_keep": 2,
+        "num_serialized_models_to_keep": 5,
     },
     "tensorboard_writer": {
         "summary_interval": 100, # 100
@@ -97,7 +96,6 @@ local batch_size = 50;
         "project_name": "jwtd",
         "upload_serialization_dir": true,
         "log_interval": 100,
-        "log_batch_output": true,
         "send_notification": true
       },
     ],
@@ -110,16 +108,16 @@ local batch_size = 50;
   },
   "data_loader": {
       "type": "pytorch_dataloader",
-      // "batch_sampler": {
-      //   "type": "bucket",
-      //   "batch_size": batch_size,
-      //   "sorting_keys": ["source_tokens", "target_tokens"],
-      // },
+      "batch_sampler": {
+        "type": "bucket",
+        "batch_size": batch_size,
+        "sorting_keys": ["source_tokens", "target_tokens"],
+      },
       "num_workers": 2,
   },
   "vocabulary": {
     "type": "from_files",
-    "directory": "experiments/jwtd/0002_lstm_cell/vocabulary"
+    "directory": bucket + "/experiments/jwtd/premade-vocabs/mecab.tar.gz"
     // "extend": true
   }
 }

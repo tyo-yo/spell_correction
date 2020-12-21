@@ -15,7 +15,6 @@ class LogToComet(TrainerCallback):
         project_name: str = None,
         upload_serialization_dir: bool = True,
         log_interval: int = 100,
-        log_batch_output: bool = True,
         send_notification: bool = True
     ):
         self._project_name = project_name

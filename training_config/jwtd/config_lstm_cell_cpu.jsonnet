@@ -20,7 +20,7 @@ local batch_size = 50;
     },
     "source_max_tokens": max_len,
     "target_max_tokens": max_len,
-    // sudachiのtokenizeによりデフォルトのstart_symbolの@start@が @, start, @ になってしまうための設定
+    // tokenizeによりデフォルトのstart_symbolの@start@が @, start, @ になってしまうための設定
     "start_symbol": "STARTSYMBOL",
     "end_symbol": "ENDSYMBOL",
   },
