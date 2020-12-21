@@ -78,6 +78,7 @@ local batch_size = 50;
     "grad_norm": 5.0,
     "grad_clipping": null,
     "validation_metric": "-LevenshteinDistance",
+    "use_amp": true,
     "optimizer": {
       "type": "adam",
       "lr": 1e-3,
