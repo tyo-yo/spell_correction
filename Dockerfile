@@ -6,6 +6,10 @@ ENV WORKDIR /app/
 WORKDIR ${WORKDIR}
 
 RUN apt-get update && apt-get install -y build-essential
+
+# Install MeCab
+RUN apt-get update && apt-get install -y mecab libmecab-dev
+
 # cuda install start
 # https://gitlab.com/nvidia/container-images/cuda/blob/master/dist/11.0/ubuntu20.04-x86_64/base/Dockerfile
 RUN apt-get update && apt-get install -y --no-install-recommends \

@@ -18,9 +18,14 @@ sudachipy = "^0.4.9"
 sudachidict_core = "^20200722"
 comet_ml = "^3.2.9"
 python-Levenshtein = "^0.12.0"
+mecab-python3 = "^1.0.3"
 
 [tool.poetry.dev-dependencies]
 jupyterlab = "^2.2.9"
+pytest-profiling = "^1.7.0"
+
+[tool.pytest.ini_options]
+python_paths = "./"
 
 [build-system]
 requires = ["poetry>=0.12"]
