@@ -41,7 +41,7 @@ class LevenshteinDistance(Metric):
         average_value = self._total_value / self._count if self._count > 0 else 0.0
         if reset:
             self.reset()
-        return float(average_value)
+        return {"LevenshteinDistance": float(average_value)}
 
     @overrides
     def reset(self):
