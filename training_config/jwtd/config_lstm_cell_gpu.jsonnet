@@ -5,7 +5,7 @@ local max_len = 100;
 local num_layers = 2;
 local dropout = 0.1;
 local bidirectional = true;
-local batch_size = 48;
+local batch_size = 128;
 
 local bucket = "https://storage.googleapis.com/tyoyo";
 
