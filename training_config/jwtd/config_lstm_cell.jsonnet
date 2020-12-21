@@ -5,12 +5,13 @@ local max_len = 64;
 local num_layers = 2;
 local dropout = 0.1;
 local bidirectional = true;
-local batch_size = 128;
+local batch_size = 50;
 
 
 {
   "dataset_reader": {
     "type": "seq2seq",
+    "lazy": true,
     "source_tokenizer": {
         "type": "spacy",
         "language": "ja_core_news_sm"
@@ -79,12 +80,7 @@ local batch_size = 128;
     "validation_metric": "-LevenshteinDistance",
     "optimizer": {
       "type": "adam",
-      "eps": 1e-9,
-      "betas": [
-        0.9,
-        0.98
-      ],
-      "weight_decay": 0.01,
+      "lr": 1e-3,
     },
     "checkpointer": {
         "num_serialized_models_to_keep": 2,
@@ -98,7 +94,10 @@ local batch_size = 128;
       {
         "type": "log_to_comet",
         "project_name": "jwtd",
-        "upload_serialization_dir": true
+        "upload_serialization_dir": true,
+        "log_interval": 100,
+        "log_batch_output": true,
+        "send_notification": true
       },
     ],
     // "learning_rate_scheduler": {
@@ -110,15 +109,16 @@ local batch_size = 128;
   },
   "data_loader": {
       "type": "pytorch_dataloader",
-      "batch_sampler": {
-        "type": "bucket",
-        "batch_size": batch_size,
-        "sorting_keys": ["source_tokens", "target_tokens"],
-      },
+      // "batch_sampler": {
+      //   "type": "bucket",
+      //   "batch_size": batch_size,
+      //   "sorting_keys": ["source_tokens", "target_tokens"],
+      // },
       "num_workers": 2,
   },
-//   "vocabulary": {
-//     "directory_path": "data/vocabulary",
-//     "extend": true
-//   }
+  "vocabulary": {
+    "type": "from_files",
+    "directory": "experiments/jwtd/0002_lstm_cell/vocabulary"
+    // "extend": true
+  }
 }

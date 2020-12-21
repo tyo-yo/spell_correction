@@ -22,7 +22,8 @@ docker run --rm -it -v $PWD:/app -p 11111:11111 --env-file .env --gpus all spell
 docker run -d -it -v $PWD:/app --env-file .env --gpus all spell_correction bash
 docker ps
 docker attach [docker container id]
-# Detach: Ctrl + Q
+# Detach: Ctrl + P -> Ctrl + Q
+docker start [docker container id]
 ```
 
 ### Local Env
