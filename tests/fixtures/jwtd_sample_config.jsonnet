@@ -58,7 +58,10 @@ local batch_size = 2;
       "tensor_based_metric": {
         "type": "bleu"
       },
-      "token_based_metric": null,
+      "token_based_metric": {
+        "type": "levenshtein_distance",
+        "avg_by_seq_len": false
+      },
       /* "label_smoothing_ratio": 0.1, */
       "decoder_net": {
         "type": "lstm_cell",
@@ -73,7 +76,7 @@ local batch_size = 2;
     "cuda_device": cuda_device,
     "grad_norm": 5.0,
     "grad_clipping": null,
-    "validation_metric": "+BLEU",
+    "validation_metric": "-LevenshteinDistance",
     "optimizer": {
       "type": "adam",
       "eps": 1e-9,
