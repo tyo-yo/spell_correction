@@ -42,7 +42,9 @@ local bucket = "https://storage.googleapis.com/tyoyo";
       "type": "lstm",
       "input_size": hidden_dim,
       "hidden_size": hidden_dim / 2,
-      "num_layers": num_layers,
+      "num_layers": num_encoder_layers,
+      "bias": true,
+      "dropout": dropout,
       "bidirectional": bidirectional
     },
     "decoder": {
@@ -63,9 +65,16 @@ local bucket = "https://storage.googleapis.com/tyoyo";
       },
       /* "label_smoothing_ratio": 0.1, */
       "decoder_net": {
-        "type": "lstm_cell",
+        "type": "lstm",
         "decoding_dim": hidden_dim,
         "target_embedding_dim": hidden_dim,
+        "num_layers": num_decoder_layers,
+        "bias": true,
+        "dropout": dropout,
+        "bidirectional_input": bidirectional,
+        "attention": {
+          "type": "dot_product"
+        },
       }
     },
   },
@@ -79,7 +88,7 @@ local bucket = "https://storage.googleapis.com/tyoyo";
     "use_amp": true,
     "optimizer": {
       "type": "adam",
-      "lr": 1e-3,
+      "lr": 1e-2,
     },
     "checkpointer": {
         "num_serialized_models_to_keep": 5,

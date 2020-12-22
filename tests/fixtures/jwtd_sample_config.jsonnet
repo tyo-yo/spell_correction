@@ -2,7 +2,8 @@ local cuda_device = -1;
 
 local hidden_dim = 8;
 local max_len = 64;
-local num_layers = 1;
+local num_encoder_layers = 1;
+local num_decoder_layers = 1;
 local dropout = 0.0;
 local bidirectional = true;
 local batch_size = 2;
@@ -11,13 +12,14 @@ local batch_size = 2;
 {
   "dataset_reader": {
     "type": "seq2seq",
+    "lazy": false,
     "source_tokenizer": {
-        "type": "spacy",
-        "language": "ja_core_news_sm"
+        "type": "mecab",
+        "special_tokens": ["@start@", "@end@"],
     },
     "target_tokenizer": {
-        "type": "spacy",
-        "language": "ja_core_news_sm"
+        "type": "mecab",
+        "special_tokens": ["@start@", "@end@"],
     },
     "source_max_tokens": max_len,
     "target_max_tokens": max_len,
@@ -40,7 +42,9 @@ local batch_size = 2;
       "type": "lstm",
       "input_size": hidden_dim,
       "hidden_size": hidden_dim / 2,
-      "num_layers": num_layers,
+      "num_layers": num_encoder_layers,
+      "bias": true,
+      "dropout": dropout,
       "bidirectional": bidirectional
     },
     "decoder": {
@@ -61,9 +65,16 @@ local batch_size = 2;
       },
       /* "label_smoothing_ratio": 0.1, */
       "decoder_net": {
-        "type": "lstm_cell",
+        "type": "lstm",
         "decoding_dim": hidden_dim,
         "target_embedding_dim": hidden_dim,
+        "num_layers": num_decoder_layers,
+        "bias": true,
+        "dropout": dropout,
+        "bidirectional_input": bidirectional,
+        "attention": {
+          "type": "dot_product"
+        },
       }
     },
   },
