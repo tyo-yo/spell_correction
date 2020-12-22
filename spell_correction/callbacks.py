@@ -34,9 +34,9 @@ class LogToComet(TrainerCallback):
         is_training: bool,
         is_master: bool
     ):
+        step = self.get_step(trainer, epoch, batch_number)
         if self.log_interval <= 0:
             return
-        step = self.get_step(trainer, epoch, batch_number)
         # `on_end` are not called on validation epoch, so we'll log all validation batches
         elif batch_number % self.log_interval == 0 or not is_training:
             for key, val in batch_metrics.items():
@@ -68,4 +68,4 @@ class LogToComet(TrainerCallback):
                 self._experiment.log_metric(f"{key}", val, epoch=epoch, step=step)
 
     def get_step(self, trainer, epoch, batch_number=0):
-        return len(self.trainer.data_loader) * epoch + batch_number
+        return len(trainer.data_loader) * epoch + batch_number
