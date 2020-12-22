@@ -11,18 +11,17 @@ local batch_size = 50;
 {
   "dataset_reader": {
     "type": "seq2seq",
-    "lazy": true,
+    "lazy": false,
     "source_tokenizer": {
-        "type": "mecab"
+        "type": "mecab",
+        "special_tokens": ["@start@", "@end@"],
     },
     "target_tokenizer": {
-        "type": "mecab"
+        "type": "mecab",
+        "special_tokens": ["@start@", "@end@"],
     },
     "source_max_tokens": max_len,
     "target_max_tokens": max_len,
-    // tokenizeによりデフォルトのstart_symbolの@start@が @, start, @ になってしまうための設定
-    "start_symbol": "STARTSYMBOL",
-    "end_symbol": "ENDSYMBOL",
   },
   "train_data_path": "https://storage.googleapis.com/tyoyo/jwtd/v1.0/train.tsv",
   "validation_data_path": "https://storage.googleapis.com/tyoyo/jwtd/v1.0/dev.tsv",

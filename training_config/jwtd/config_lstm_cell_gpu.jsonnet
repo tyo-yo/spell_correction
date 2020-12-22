@@ -14,16 +14,15 @@ local bucket = "https://storage.googleapis.com/tyoyo";
     "type": "seq2seq",
     "lazy": false,
     "source_tokenizer": {
-        "type": "mecab"
+        "type": "mecab",
+        "special_tokens": ["@start@", "@end@"],
     },
     "target_tokenizer": {
-        "type": "mecab"
+        "type": "mecab",
+        "special_tokens": ["@start@", "@end@"],
     },
     "source_max_tokens": max_len,
-    "target_max_tokens": max_len,
-    // sudachiのtokenizeによりデフォルトのstart_symbolの@start@が @, start, @ になってしまうための設定
-    "start_symbol": "STARTSYMBOL",
-    "end_symbol": "ENDSYMBOL",
+    "target_max_tokens": max_len
   },
   "train_data_path": bucket + "/jwtd/v1.0/train.tsv",
   "validation_data_path": bucket + "/jwtd/v1.0/dev.tsv",
@@ -117,7 +116,7 @@ local bucket = "https://storage.googleapis.com/tyoyo";
   },
   "vocabulary": {
     "type": "from_files",
-    "directory": bucket + "/experiments/jwtd/premade-vocabs/mecab-30k.tar.gz",
+    "directory": bucket + "/experiments/jwtd/premade-vocabs/mecab-30k-v1.1.tar.gz",
     // "extend": true
   }
 }
