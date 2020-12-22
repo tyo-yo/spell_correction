@@ -3,9 +3,9 @@ local cuda_device = 0;
 local hidden_dim = 500;
 local max_len = 100;
 local num_layers = 2;
-local dropout = 0.1;
+local dropout = 0.3;
 local bidirectional = true;
-local batch_size = 128;
+local batch_size = 100;
 
 local bucket = "https://storage.googleapis.com/tyoyo";
 
@@ -55,7 +55,7 @@ local bucket = "https://storage.googleapis.com/tyoyo";
       },
       "target_namespace": "tokens",
       "tie_output_embedding": true,
-      "beam_size": 4,
+      "beam_size": 5,
       "tensor_based_metric": {
         "type": "bleu"
       },
@@ -89,6 +89,10 @@ local bucket = "https://storage.googleapis.com/tyoyo";
     "optimizer": {
       "type": "adam",
       "lr": 1e-2,
+      "betas": [0.9, 0.000],
+      "eps": 1e-8,  # default, but need to be tuned
+      "weight_decay": 0.01,
+      "ams_grad": false
     },
     "checkpointer": {
         "num_serialized_models_to_keep": 5,
@@ -121,7 +125,7 @@ local bucket = "https://storage.googleapis.com/tyoyo";
         "batch_size": batch_size,
         "sorting_keys": ["source_tokens", "target_tokens"],
       },
-      "num_workers": 2,
+      "num_workers": 4,
   },
   "vocabulary": {
     "type": "from_files",
