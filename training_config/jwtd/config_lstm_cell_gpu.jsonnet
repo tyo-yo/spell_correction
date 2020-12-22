@@ -2,7 +2,8 @@ local cuda_device = 0;
 
 local hidden_dim = 500;
 local max_len = 100;
-local num_layers = 2;
+local num_encoder_layers = 2;
+local num_decoder_layers = 2;
 local dropout = 0.3;
 local bidirectional = true;
 local batch_size = 100;
@@ -89,10 +90,9 @@ local bucket = "https://storage.googleapis.com/tyoyo";
     "optimizer": {
       "type": "adam",
       "lr": 1e-2,
-      "betas": [0.9, 0.000],
+      "betas": [0.9, 0.999],
       "eps": 1e-8,  # default, but need to be tuned
       "weight_decay": 0.01,
-      "ams_grad": false
     },
     "checkpointer": {
         "num_serialized_models_to_keep": 5,
