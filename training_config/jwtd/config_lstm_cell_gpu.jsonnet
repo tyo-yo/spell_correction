@@ -80,7 +80,7 @@ local bucket = "https://storage.googleapis.com/tyoyo";
   },
   "trainer": {
     "num_epochs": 10,
-    "patience": 5,
+    "patience": 2,
     "cuda_device": cuda_device,
     "grad_norm": 5.0,
     "grad_clipping": null,
@@ -98,8 +98,8 @@ local bucket = "https://storage.googleapis.com/tyoyo";
         "num_serialized_models_to_keep": 5,
     },
     "tensorboard_writer": {
-        "summary_interval": 100, # 100
-        "histogram_interval": 10000, # null
+        "summary_interval": 100,
+        "histogram_interval": 10000,
         "should_log_learning_rate": true,
     },
     "trainer_callbacks": [
@@ -130,6 +130,5 @@ local bucket = "https://storage.googleapis.com/tyoyo";
   "vocabulary": {
     "type": "from_files",
     "directory": bucket + "/experiments/jwtd/premade-vocabs/mecab-30k-v1.1.tar.gz",
-    // "extend": true
   }
 }
