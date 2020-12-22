@@ -75,7 +75,7 @@ local bucket = "https://storage.googleapis.com/tyoyo";
         "bidirectional_input": bidirectional,
         "attention": {
           "type": "dot_product"
-        },
+        }
       }
     },
   },
@@ -89,10 +89,10 @@ local bucket = "https://storage.googleapis.com/tyoyo";
     "use_amp": true,
     "optimizer": {
       "type": "adam",
-      "lr": 1e-2,
+      "lr": 1e-3,
       "betas": [0.9, 0.999],
       "eps": 1e-8,  # default, but need to be tuned
-      "weight_decay": 0.01,
+      "weight_decay": 0.0,
     },
     "checkpointer": {
         "num_serialized_models_to_keep": 5,
