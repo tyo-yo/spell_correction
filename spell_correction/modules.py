@@ -64,10 +64,54 @@ class LstmDecoderNet(DecoderNet):
             bias=bias,
             dropout=dropout,
         )
+        self._num_layers = num_layers
         self._bidirectional_input = bidirectional_input
 
-    _prepare_attended_input = LstmCellDecoderNet._prepare_attended_input
-    init_decoder_state = LstmCellDecoderNet.init_decoder_state
+    def _prepare_attended_input(
+        self,
+        decoder_hidden_state: torch.Tensor = None,
+        encoder_outputs: torch.Tensor = None,
+        encoder_outputs_mask: torch.BoolTensor = None,
+    ) -> torch.Tensor:
+        """Apply attention over encoder outputs and decoder state."""
+        # shape: (batch_size, max_input_sequence_length)
+        input_weights = self._attention(
+            decoder_hidden_state[0], encoder_outputs, encoder_outputs_mask
+        )
+
+        # shape: (batch_size, encoder_output_dim)
+        attended_input = util.weighted_sum(encoder_outputs, input_weights)
+
+        return attended_input
+
+    def init_decoder_state(
+        self, encoder_out: Dict[str, torch.LongTensor]
+    ) -> Dict[str, torch.Tensor]:
+
+        batch_size, _ = encoder_out["source_mask"].size()
+
+        # Initialize the decoder hidden state with the final output of the encoder,
+        # and the decoder context with zeros.
+        # shape: (batch_size, encoder_output_dim)
+        final_encoder_output = util.get_final_encoder_states(
+            encoder_out["encoder_outputs"],
+            encoder_out["source_mask"],
+            bidirectional=self._bidirectional_input,
+        )
+        # shape: (num_layers, batch_size, decoder_output_dim)
+        decoder_hidden = final_encoder_output.unsqueeze(0).repeat(
+            self._num_layers, 1, 1
+        )
+
+        # shape: (batch_size, decoder_output_dim)
+        decoder_context = final_encoder_output.new_zeros(batch_size, self.decoding_dim)
+        # shape: (num_layers, batch_size, decoder_output_dim)
+        decoder_context = decoder_context.unsqueeze(0).repeat(self._num_layers, 1, 1)
+
+        return {
+            "decoder_hidden": decoder_hidden,  # shape: (batch_size, decoder_output_dim)
+            "decoder_context": decoder_context,
+        }
 
     @overrides
     def forward(
@@ -108,5 +152,5 @@ class LstmDecoderNet(DecoderNet):
 
         return (
             {"decoder_hidden": decoder_hidden, "decoder_context": decoder_context},
-            decoder_hidden,
+            decoder_hidden[-1],  # Output final decoder hidden state
         )
