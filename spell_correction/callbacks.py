@@ -36,7 +36,8 @@ class LogToComet(TrainerCallback):
     ):
         if self.log_interval <= 0:
             return
-        elif batch_number % self.log_interval == 0:
+        # `on_end` are not called on validation epoch, so we'll log all validation batches
+        elif batch_number % self.log_interval == 0 or not is_training:
             for key, val in batch_metrics.items():
                 self._experiment.log_metric(
                     f"{key}",
