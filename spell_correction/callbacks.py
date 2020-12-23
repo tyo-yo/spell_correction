@@ -1,12 +1,13 @@
 import json
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 import comet_ml
 from allennlp.data.dataloader import TensorDict
 from allennlp.models.archival import CONFIG_NAME
 from allennlp.training import TrainerCallback
 from flatten_dict import flatten
+
 
 @TrainerCallback.register("log_to_comet")
 class LogToComet(TrainerCallback):
@@ -15,7 +16,7 @@ class LogToComet(TrainerCallback):
         project_name: str = None,
         upload_serialization_dir: bool = True,
         log_interval: int = 100,
-        send_notification: bool = True
+        send_notification: bool = True,
     ):
         self._project_name = project_name
         self._experiment = comet_ml.Experiment(project_name=self._project_name)
@@ -32,27 +33,21 @@ class LogToComet(TrainerCallback):
         epoch: int,
         batch_number: int,
         is_training: bool,
-        is_master: bool
+        is_master: bool,
     ):
         step = self.get_step(trainer, epoch, batch_number)
         if self.log_interval <= 0:
             return
-        # `on_end` are not called on validation epoch, so we'll log all validation batches
-        elif batch_number % self.log_interval == 0 or not is_training:
+        elif batch_number % self.log_interval == 0:
             for key, val in batch_metrics.items():
-                self._experiment.log_metric(
-                    f"{key}",
-                    val,
-                    epoch=epoch,
-                    step=step
-                )
+                self._experiment.log_metric(f"{key}", val, epoch=epoch, step=step)
 
     def on_end(self, trainer, metrics, epoch, is_master):
         self._experiment.add_tag("COMPLETED")
         if self.upload_serialization_dir:
             self._experiment.log_model("serialization_dir", trainer._serialization_dir)
         if self.send_notification:
-            self._experiment.send_notification('Training Finished!', status='COMPLETED')
+            self._experiment.send_notification("Training Finished!", status="COMPLETED")
 
     def on_epoch(self, trainer, metrics, epoch, is_master):
         if epoch == -1:
