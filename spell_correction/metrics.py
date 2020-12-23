@@ -12,6 +12,7 @@ class LevenshteinDistance(Metric):
         self.avg_by_seq_len = avg_by_seq_len
         self._total_value = 0.0
         self._count = 0
+        self._total_exact_matches = 0
 
     @overrides
     def __call__(self, pred_tokens: List[List[str]], gold_tokens: List[List[str]]):
@@ -22,6 +23,9 @@ class LevenshteinDistance(Metric):
         gold_sentences = ["".join(g) for g in gold_tokens]
 
         distances = [distance(p, g) for p, g in zip(pred_sentences, gold_sentences)]
+
+        self._total_exact_matches += sum([d == 0 for d in distances])
+
         self._count += len(distances)
 
         if self.avg_by_seq_len:
@@ -39,11 +43,16 @@ class LevenshteinDistance(Metric):
         """
 
         average_value = self._total_value / self._count if self._count > 0 else 0.0
+        avg_exact_match = self._total_exact_matches / self._count if self._count > 0 else 0.0
         if reset:
             self.reset()
-        return {"LevenshteinDistance": float(average_value)}
+        return {
+            "LevenshteinDistance": float(average_value),
+            "ExactMatch": avg_exact_match
+        }
 
     @overrides
     def reset(self):
         self._total_value = 0.0
         self._count = 0
+        self._total_exact_matches = 0

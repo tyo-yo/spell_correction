@@ -1,13 +1,14 @@
-local cuda_device = -1;
+local cuda_device = 0;
 
-local hidden_dim = 8;
-local max_len = 64;
-local num_encoder_layers = 1;
-local num_decoder_layers = 1;
-local dropout = 0.0;
+local hidden_dim = 500;
+local max_len = 100;
+local num_encoder_layers = 2;
+local num_decoder_layers = 2;
+local dropout = 0.3;
 local bidirectional = true;
-local batch_size = 2;
+local batch_size = 100;
 
+local bucket = "https://storage.googleapis.com/tyoyo";
 
 {
   "dataset_reader": {
@@ -22,10 +23,10 @@ local batch_size = 2;
         "special_tokens": ["@start@", "@end@"],
     },
     "source_max_tokens": max_len,
-    "target_max_tokens": max_len,
+    "target_max_tokens": max_len
   },
-  "train_data_path": "tests/fixtures/jwtd_sample.tsv",
-  "validation_data_path": "tests/fixtures/jwtd_sample.tsv",
+  "train_data_path": bucket + "/jwtd/v1.0/train.tsv",
+  "validation_data_path": bucket + "/jwtd/v1.0/dev.tsv",
   "model": {
     "type": "composed_seq2seq",
     "source_text_embedder": {
@@ -55,7 +56,7 @@ local batch_size = 2;
       },
       "target_namespace": "tokens",
       "tie_output_embedding": true,
-      "beam_size": 4,
+      "beam_size": 5,
       "tensor_based_metric": {
         "type": "bleu"
       },
@@ -74,39 +75,40 @@ local batch_size = 2;
         "bidirectional_input": bidirectional,
         "attention": {
           "type": "dot_product"
-        },
+        }
       }
     },
   },
   "trainer": {
     "num_epochs": 10,
-    "patience": 5,
+    "patience": 2,
     "cuda_device": cuda_device,
     "grad_norm": 5.0,
     "grad_clipping": null,
     "validation_metric": "-LevenshteinDistance",
+    "use_amp": true,
     "optimizer": {
       "type": "adam",
-      "eps": 1e-9,
-      "betas": [
-        0.9,
-        0.98
-      ],
-      "weight_decay": 0.01,
+      "lr": 1e-3,
+      "betas": [0.9, 0.999],
+      "eps": 1e-8,  # default, but need to be tuned
+      "weight_decay": 0.0,
     },
     "checkpointer": {
-        "num_serialized_models_to_keep": 2,
+        "num_serialized_models_to_keep": 5,
     },
     "tensorboard_writer": {
-        "summary_interval": 100, # 100
-        "histogram_interval": 10000, # null
+        "summary_interval": 100,
+        "histogram_interval": 10000,
         "should_log_learning_rate": true,
     },
     "trainer_callbacks": [
       {
         "type": "log_to_comet",
-        "project_name": "jwtd_test",
-        "upload_serialization_dir": true
+        "project_name": "jwtd",
+        "upload_serialization_dir": true,
+        "log_interval": 100,
+        "send_notification": true
       },
     ],
     // "learning_rate_scheduler": {
@@ -123,10 +125,10 @@ local batch_size = 2;
         "batch_size": batch_size,
         "sorting_keys": ["source_tokens", "target_tokens"],
       },
-      "num_workers": 2,
+      "num_workers": 4,
   },
-//   "vocabulary": {
-//     "directory_path": "data/vocabulary",
-//     "extend": true
-//   }
+  "vocabulary": {
+    "type": "from_files",
+    "directory": bucket + "/experiments/jwtd/premade-vocabs/mecab-30k-v1.1.tar.gz",
+  }
 }
