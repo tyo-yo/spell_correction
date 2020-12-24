@@ -1,0 +1,52 @@
+[
+    {
+        "type": "float",
+        "attributes": {
+            "name": "lr",
+            "low": 5e-3,
+            "high": 5e-1,
+            "log": true
+        }
+    },
+    {
+        "type": "int",
+        "attributes": {
+            "name": "hidden_dim",
+            "low": 64,
+            "high": 1024
+        }
+    },
+    {
+        "type": "int",
+        "attributes": {
+            "name": "num_encoder_layers",
+            "low": 1,
+            "high": 4
+        }
+    },
+    {
+        "type": "int",
+        "attributes": {
+            "name": "num_decoder_layers",
+            "low": 1,
+            "high": 4
+        }
+    },
+    {
+        "type": "float",
+        "attributes": {
+            "name": "dropout",
+            "low": 0.0,
+            "high": 0.5
+        }
+    },
+    {
+        "type": "float",
+        "attributes": {
+            "name": "eps",
+            "low": 1e-11,
+            "high": 1e-1,
+            "log": true
+        }
+    }
+]
