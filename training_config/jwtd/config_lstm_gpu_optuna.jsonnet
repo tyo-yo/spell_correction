@@ -1,12 +1,13 @@
 local cuda_device = 0;
 
 local lr = std.parseJson(std.extVar('lr'));
-local hidden_dim = std.parseJson(std.extVar('hidden_dim'));
+local encoder_hidden_dim = std.parseJson(std.extVar('encoder_hidden_dim'));
 local num_encoder_layers = std.parseJson(std.extVar('num_encoder_layers'));
 local num_decoder_layers = std.parseJson(std.extVar('num_decoder_layers'));
 local dropout = std.parseJson(std.extVar('dropout'));
 local eps = std.parseJson(std.extVar('eps'));
 
+local hidden_dim = encoder_hidden_dim * 2;
 local batch_size = 32;
 local max_len = 100;
 local bidirectional = true;
@@ -45,7 +46,7 @@ local bucket = "https://storage.googleapis.com/tyoyo";
     "encoder": {
       "type": "lstm",
       "input_size": hidden_dim,
-      "hidden_size": hidden_dim / 2,
+      "hidden_size": encoder_hidden_dim,
       "num_layers": num_encoder_layers,
       "bias": true,
       "dropout": dropout,

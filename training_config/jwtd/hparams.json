@@ -11,9 +11,9 @@
     {
         "type": "int",
         "attributes": {
-            "name": "hidden_dim",
-            "low": 64,
-            "high": 1024
+            "name": "encoder_hidden_dim",
+            "low": 32,
+            "high": 512
         }
     },
     {
