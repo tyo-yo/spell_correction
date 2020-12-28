@@ -35,7 +35,7 @@ class T5SpellCorrector:
         self,
         model_name="google/mt5-small",
         max_total_distance: int = 2,
-        max_each_distance: int = 2,
+        max_each_distance: int = 1,
         substitution_cost_fn: Callable[[str, str], float] = lambda str1, str2: 1.0,
         insertion_cost_fn: Callable[[str], float] = lambda _: 1.0,
         deletion_cost_fn: Callable[[str], float] = lambda _: 1.0,
@@ -43,6 +43,7 @@ class T5SpellCorrector:
         filter_fn: Callable[[Edit], bool] = lambda edit: True,
         max_rank: int = 50000,
         add_original_token_to_masked_text: bool = True,
+        beam_stack_size: int = 100,
     ):
         self.model = MT5ForConditionalGeneration.from_pretrained(model_name)
         for p in self.model.parameters():
@@ -65,6 +66,7 @@ class T5SpellCorrector:
         self.score_fn = score_fn
         self.filter_fn = filter_fn
         self.add_original_token_to_masked_text = add_original_token_to_masked_text
+        self.beam_stack_size = beam_stack_size
 
     def predict(self, text: str) -> Dict[str, Any]:
         raise NotImplementedError
@@ -77,18 +79,22 @@ class T5SpellCorrector:
         return beams[0]
         # return masked_text.replace(" <extra_id_0>", ""), changes
 
-    def beam_search(self, masked_text, original_token) -> List[Dict[str, Any]]:
+    def beam_search(self, masked_text, original_token) -> List[Beam]:
         beam_stack = [Beam(masked_text=masked_text, remaining_text=original_token)]
         beam_finished = []
 
         while beam_stack:
             beam = beam_stack.pop()
-            possible_beams = self.calc_possible_beams(beam)
+            possible_beams = self.take_beam_step(beam)
             for possible_beam in possible_beams:
-                if self._is_finished_beam(possible_beam):
+                status = self._get_beam_status(possible_beam)
+                if status == FINISHED:
                     beam_finished.append(possible_beam)
-                else:
+                elif status == PROCESSING:
                     beam_stack.append(possible_beam)
+
+            beam_stack = beam_stack[: self.beam_stack_size]
+        return beam_finished
 
     def _get_beam_status(self, beam: Beam) -> str:
         if beam.total_distance > self.max_total_distance:
@@ -159,22 +165,22 @@ class T5SpellCorrector:
         possible_edits = sorted(possible_edits, key=self.score_fn, reverse=True)
         return possible_edits
 
-    def take_beam_step(self, beam: Beam, len_original_token: int) -> List[Beam]:
+    def take_beam_step(self, beam: Beam) -> List[Beam]:
         possible_edits = self.calc_possible_edits(beam)
-        hopeful_edits = self.filter_hopeful_edits(
-            possible_edits, len_original_token, self.max_each_distance
-        )
+        hopeful_edits = self.filter_hopeful_edits(possible_edits)
 
         possible_beams = [
-            self._apply_edit_to_beam(edit, beam) for edit in possible_edits
+            self._apply_edit_to_beam(edit, beam) for edit in hopeful_edits
         ]
 
         return possible_beams
 
-    def filter_hopeful_edits(
-        self, sorted_edits: List[Edit], len_original_token: int,
-    ) -> List[Edit]:
-
+    def filter_hopeful_edits(self, sorted_edits: List[Edit]) -> List[Edit]:
+        if not sorted_edits:
+            return []
+        len_original_token = len(sorted_edits[0].filled_text) + len(
+            sorted_edits[0].remaining_text
+        )
         hopeful_edits = []
         # 尤度が高く、より一致する部分が多く、編集距離が小さいものがより良いEdit だが、それを選ぶのは難しい
         # そこで、一致度合いと編集距離の各パターンにおいて尤度が最も高くなるEditを全てhopefulとする
