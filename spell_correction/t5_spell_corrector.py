@@ -199,20 +199,3 @@ class T5SpellCorrector:
             )
             hopeful_edits.append(hopeful_edit)
         return hopeful_edits
-
-    # def _process_beam(self, beam: Beam) -> List[Beam]:
-    # raise NotImplementedError
-    # remaining_text = original_token
-    # changes = []
-
-    # for step in range(self.max_decoding_steps):
-    #     candidates = self.calc_next_token_candidates(masked_text, remaining_text)
-    #     selected = candidates[0]
-    #     changes.append(selected)
-
-    #     masked_text = masked_text.replace(
-    #         " <extra_id_0>", f"{selected['token']} <extra_id_0>"
-    #     )
-    #     remaining_text = remaining_text[selected["match_len"] :]
-    #     if remaining_text == "":
-    #         break
