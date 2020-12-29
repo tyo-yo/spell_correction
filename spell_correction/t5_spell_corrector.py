@@ -1,5 +1,6 @@
 from functools import lru_cache
 from itertools import product
+from logging import getLogger
 from typing import Any, Callable, Dict, List, Tuple
 
 from pydantic import BaseModel
@@ -8,6 +9,7 @@ from transformers import MT5ForConditionalGeneration, T5Tokenizer
 
 from spell_correction.utils import BeginningLevenshtein
 
+logger = getLogger(__name__)
 OVEREDIT = "OVEREDIT"
 FINISHED = "FINISHED"
 PROCESSING = "PROCESSING"
@@ -17,8 +19,8 @@ class Edit(BaseModel):
     text_after: str
     text_before: str
     distance: float
-    log_likelihood: float
-    likelihood_rank: int
+    log_likelihood: float = 0  # TEMP: 本当は違う！！
+    likelihood_rank: int = -1
 
 
 class Beam(BaseModel):
@@ -39,11 +41,11 @@ class T5SpellCorrector:
         substitution_cost_fn: Callable[[str, str], float] = lambda str1, str2: 1.0,
         insertion_cost_fn: Callable[[str], float] = lambda _: 1.0,
         deletion_cost_fn: Callable[[str], float] = lambda _: 1.0,
-        score_fn: Callable[[Edit], float] = lambda edit: edit.likelihood,
+        score_fn: Callable[[Edit], float] = lambda edit: edit.log_likelihood,
         filter_fn: Callable[[Edit], bool] = lambda edit: True,
         max_rank: int = 50000,
-        add_original_token_to_masked_text: bool = True,
-        beam_stack_size: int = 100,
+        add_original_token_to_masked_text: bool = False,
+        beam_size: int = 10,
     ):
         self.model = MT5ForConditionalGeneration.from_pretrained(model_name)
         for p in self.model.parameters():
@@ -66,20 +68,21 @@ class T5SpellCorrector:
         self.score_fn = score_fn
         self.filter_fn = filter_fn
         self.add_original_token_to_masked_text = add_original_token_to_masked_text
-        self.beam_stack_size = beam_stack_size
+        self.beam_size = beam_size
 
     def predict(self, text: str) -> Dict[str, Any]:
         raise NotImplementedError
 
     def fill_masked_text(self, masked_text: str, original_token: str) -> Dict[str, Any]:
-        if self.add_original_token_to_masked_text:
-            masked_text += " </s>" + original_token
-
         beams = self.beam_search(masked_text, original_token)
         return beams[0]
         # return masked_text.replace(" <extra_id_0>", ""), changes
 
-    def beam_search(self, masked_text, original_token) -> List[Beam]:
+    def beam_search(self, masked_text, original_token, beam_size=None) -> List[Beam]:
+        if beam_size is None:
+            beam_size = self.beam_size
+        if self.add_original_token_to_masked_text:
+            masked_text += " </s>" + original_token
         beam_stack = [Beam(masked_text=masked_text, remaining_text=original_token)]
         beam_finished = []
 
@@ -89,17 +92,20 @@ class T5SpellCorrector:
             for possible_beam in possible_beams:
                 status = self._get_beam_status(possible_beam)
                 if status == FINISHED:
+                    logger.debug(possible_beam)
                     beam_finished.append(possible_beam)
                 elif status == PROCESSING:
                     beam_stack.append(possible_beam)
 
-            beam_stack = beam_stack[: self.beam_stack_size]
+            beam_stack.sort(key=lambda beam: beam.total_log_likelihood, reverse=True)
+            if len(beam_finished) >= self.beam_size:
+                return beam_finished
         return beam_finished
 
     def _get_beam_status(self, beam: Beam) -> str:
         if beam.total_distance > self.max_total_distance:
             return OVEREDIT
-        elif len(beam.remaining_str) == 0:
+        elif len(beam.remaining_text) == 0:
             return FINISHED
         else:
             return PROCESSING
@@ -114,6 +120,16 @@ class T5SpellCorrector:
         return beam
 
     def calc_possible_edits(self, beam: Beam) -> List[Edit]:
+        if beam.total_distance == self.max_total_distance:
+            # TODO: 終わることに対する尤度をちゃんと出す
+            return [
+                Edit(
+                    text_after=beam.remaining_text,
+                    text_before=beam.remaining_text,
+                    distance=0,
+                )
+            ]
+
         batch = self.tokenizer.prepare_seq2seq_batch(
             src_texts=[beam.masked_text],
             tgt_texts=["<pad> <extra_id_0>" + beam.filled_text],
@@ -132,13 +148,13 @@ class T5SpellCorrector:
         # batch size = 1 前提のコード
         top_tokens = batch_top_tokens[0]
         top_logits = batch_top_logits[0]
-        top_log_likelihoods = log_softmax(top_logits)
+        top_log_likelihoods = log_softmax(top_logits, dim=0)
 
         possible_edits = []
         for rank, (token, log_likelihood) in enumerate(
             zip(top_tokens, top_log_likelihoods)
         ):
-            if token == self.tokenizer.eos_token:
+            if token == self.tokenizer.eos_token or token.startswith("▁<extra_id_"):
                 possible_edit = Edit(
                     text_after="",
                     text_before=beam.remaining_text,
@@ -167,7 +183,9 @@ class T5SpellCorrector:
 
     def take_beam_step(self, beam: Beam) -> List[Beam]:
         possible_edits = self.calc_possible_edits(beam)
-        hopeful_edits = self.filter_hopeful_edits(possible_edits)
+
+        len_original_token = len(beam.filled_text) + len(beam.remaining_text)
+        hopeful_edits = self.filter_hopeful_edits(possible_edits, len_original_token)
 
         possible_beams = [
             self._apply_edit_to_beam(edit, beam) for edit in hopeful_edits
@@ -175,12 +193,11 @@ class T5SpellCorrector:
 
         return possible_beams
 
-    def filter_hopeful_edits(self, sorted_edits: List[Edit]) -> List[Edit]:
+    def filter_hopeful_edits(
+        self, sorted_edits: List[Edit], len_original_token: int
+    ) -> List[Edit]:
         if not sorted_edits:
             return []
-        len_original_token = len(sorted_edits[0].filled_text) + len(
-            sorted_edits[0].remaining_text
-        )
         hopeful_edits = []
         # 尤度が高く、より一致する部分が多く、編集距離が小さいものがより良いEdit だが、それを選ぶのは難しい
         # そこで、一致度合いと編集距離の各パターンにおいて尤度が最も高くなるEditを全てhopefulとする
@@ -190,12 +207,16 @@ class T5SpellCorrector:
         ):
             # 条件を満たすものをフィルタした中から、最も尤度が高いものを選択
             # （尤度が高いものからソートされているので、next()で大丈夫）
-            hopeful_edit = next(
-                filter(
-                    lambda edit: len(edit.text_before) == match_len
-                    and edit.distance == distance,
-                    sorted_edits,
+            try:
+                hopeful_edit = next(
+                    filter(
+                        lambda edit: len(edit.text_before) == match_len
+                        and edit.distance == distance,
+                        sorted_edits,
+                    )
                 )
-            )
-            hopeful_edits.append(hopeful_edit)
+            except StopIteration:
+                pass
+            else:
+                hopeful_edits.append(hopeful_edit)
         return hopeful_edits

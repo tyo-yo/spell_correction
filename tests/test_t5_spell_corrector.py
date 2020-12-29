@@ -9,3 +9,10 @@ def test_t5_spell_corrector():
     assert isinstance(corrected, str)
     assert corrected == "彼はファヴローにクラシック西部劇映画を提供した。"
     assert len(changes) == 1
+
+
+def test_beam_search():
+    spell_corrector = T5SpellCorrector()
+    beams = spell_corrector.beam_search(
+        "彼はファヴローに <extra_id_0>西部劇映画を提供した。", original_token="クラッシック"
+    )

@@ -21,6 +21,8 @@ class BeginningLevenshtein(WeightedLevenshtein):
             {"match_ref": ref, "match_len": len(ref), "distance": d}
             for ref, d in zip(ref_beginnigs, distances)
         ]
+        # 同じdistanceならよりマッチしている方を返す
+        candidates.sort(key=lambda c: c["match_len"], reverse=True)
         best = min(candidates, key=lambda c: c["distance"])
         return best
 

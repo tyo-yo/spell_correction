@@ -19,3 +19,11 @@ def test_beginning_edit_distance_01():
     assert result["match_ref"] == "sa"
     assert result["match_len"] == 2
     assert result["distance"] == 1
+
+
+def test_beginning_edit_distance_02():
+    begginng_levenshtein = BeginningLevenshtein()
+    result = begginng_levenshtein("更", "更新")
+    assert result["match_ref"] == "更"
+    assert result["match_len"] == 1
+    assert result["distance"] == 0
