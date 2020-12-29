@@ -129,15 +129,15 @@ class T5SpellCorrector:
         return beam
 
     def calc_possible_edits(self, beam: Beam) -> List[Edit]:
-        if beam.total_distance == self.max_total_distance:
-            # TODO: 終わることに対する尤度をちゃんと出す
-            return [
-                Edit(
-                    text_after=beam.remaining_text,
-                    text_before=beam.remaining_text,
-                    distance=0,
-                )
-            ]
+        # if beam.total_distance == self.max_total_distance:
+        #     # TODO: 終わることに対する尤度をちゃんと出す
+        #     return [
+        #         Edit(
+        #             text_after=beam.remaining_text,
+        #             text_before=beam.remaining_text,
+        #             distance=0,
+        #         )
+        #     ]
 
         batch = self.tokenizer.prepare_seq2seq_batch(
             src_texts=[beam.masked_text],
@@ -192,9 +192,7 @@ class T5SpellCorrector:
 
     def take_beam_step(self, beam: Beam) -> List[Beam]:
         possible_edits = self.calc_possible_edits(beam)
-
-        len_original_token = len(beam.filled_text) + len(beam.remaining_text)
-        hopeful_edits = self.filter_hopeful_edits(possible_edits, len_original_token)
+        hopeful_edits = self.filter_hopeful_edits(possible_edits, beam)
 
         possible_beams = [
             self._apply_edit_to_beam(edit, beam) for edit in hopeful_edits
@@ -202,30 +200,32 @@ class T5SpellCorrector:
 
         return possible_beams
 
-    def filter_hopeful_edits(
-        self, sorted_edits: List[Edit], len_original_token: int
-    ) -> List[Edit]:
+    def filter_hopeful_edits(self, sorted_edits: List[Edit], beam: Beam) -> List[Edit]:
         if not sorted_edits:
             return []
         hopeful_edits = []
+        max_distance = min(
+            self.max_each_distance, self.max_total_distance - beam.total_distance,
+        )
+        available_distances = set(
+            [edit.distance for edit in sorted_edits if edit.distance <= max_distance]
+        )
+        available_match_len = range(len(beam.original_text) + 1)
         # 尤度が高く、より一致する部分が多く、編集距離が小さいものがより良いEdit だが、それを選ぶのは難しい
         # そこで、一致度合いと編集距離の各パターンにおいて尤度が最も高くなるEditを全てhopefulとする
         # (match_len, distance) = (0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2) ... に対して
-        for match_len, distance in product(
-            range(len_original_token + 1), range(self.max_each_distance + 1)
-        ):
+        for match_len, distance in product(available_match_len, available_distances):
             # 条件を満たすものをフィルタした中から、最も尤度が高いものを選択
             # （尤度が高いものからソートされているので、next()で大丈夫）
-            try:
-                hopeful_edit = next(
-                    filter(
-                        lambda edit: len(edit.text_before) == match_len
-                        and edit.distance == distance,
-                        sorted_edits,
-                    )
+            filtered_edits = list(
+                filter(
+                    lambda edit: len(edit.text_before) == match_len
+                    and edit.distance == distance,
+                    sorted_edits,
                 )
-            except StopIteration:
-                pass
-            else:
-                hopeful_edits.append(hopeful_edit)
+            )
+            if not filtered_edits:
+                continue
+            hopeful_edit = max(filtered_edits, key=lambda edit: edit.log_likelihood)
+            hopeful_edits.append(hopeful_edit)
         return hopeful_edits
