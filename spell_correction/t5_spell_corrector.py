@@ -26,6 +26,7 @@ class Edit(BaseModel):
 class Beam(BaseModel):
     masked_text: str
     remaining_text: str
+    original_text: str
     filled_text: str = ""
     total_distance: float = 0.0
     total_log_likelihood: float = 0.0
@@ -83,7 +84,13 @@ class T5SpellCorrector:
             beam_size = self.beam_size
         if self.add_original_token_to_masked_text:
             masked_text += " </s>" + original_token
-        beam_stack = [Beam(masked_text=masked_text, remaining_text=original_token)]
+        beam_stack = [
+            Beam(
+                masked_text=masked_text,
+                remaining_text=original_token,
+                original_text=original_token,
+            )
+        ]
         beam_finished = []
 
         while beam_stack:
@@ -98,7 +105,7 @@ class T5SpellCorrector:
                     beam_stack.append(possible_beam)
 
             beam_stack.sort(key=lambda beam: beam.total_log_likelihood, reverse=True)
-            if len(beam_finished) >= self.beam_size:
+            if len(beam_finished) >= beam_size:
                 return beam_finished
         return beam_finished
 
@@ -114,7 +121,9 @@ class T5SpellCorrector:
         beam = beam.copy(deep=True)
         beam.remaining_text = beam.remaining_text[len(edit.text_before) :]
         beam.filled_text += edit.text_after
-        beam.total_distance += edit.distance
+        beam.total_distance = self.beginning_levenshtein.distance(
+            beam.filled_text, beam.original_text
+        )
         beam.total_log_likelihood += edit.log_likelihood
         beam.changes.append(edit)
         return beam
