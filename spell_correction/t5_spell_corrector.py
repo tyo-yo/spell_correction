@@ -91,6 +91,7 @@ class T5SpellCorrector:
                 original_text=original_token,
             )
         ]
+        next_beam_stack = []
         beam_finished = []
 
         while beam_stack:
@@ -102,11 +103,16 @@ class T5SpellCorrector:
                     logger.debug(possible_beam)
                     beam_finished.append(possible_beam)
                 elif status == PROCESSING:
-                    beam_stack.append(possible_beam)
+                    next_beam_stack.append(possible_beam)
 
-            beam_stack.sort(key=lambda beam: beam.total_log_likelihood, reverse=True)
-            if len(beam_finished) >= beam_size:
-                return beam_finished
+            if not beam_stack and next_beam_stack:
+                next_beam_stack.sort(
+                    key=lambda beam: beam.total_log_likelihood, reverse=True
+                )
+
+                beam_stack = next_beam_stack[:beam_size]
+                next_beam_stack = []
+
         return beam_finished
 
     def _get_beam_status(self, beam: Beam) -> str:
