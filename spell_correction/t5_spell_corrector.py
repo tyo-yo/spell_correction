@@ -1,9 +1,12 @@
+import math
 from functools import lru_cache
 from itertools import product
 from logging import getLogger
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
+import numpy as np
 from pydantic import BaseModel
+from scipy.stats import hmean
 from torch.nn.functional import log_softmax
 from transformers import MT5ForConditionalGeneration, T5Tokenizer
 
@@ -19,7 +22,7 @@ class Edit(BaseModel):
     text_after: str
     text_before: str
     distance: float
-    log_likelihood: float = 0  # TEMP: 本当は違う！！
+    log_likelihood: float = 0  # TODO: 本当は違う！！
     likelihood_rank: int = -1
 
 
@@ -31,6 +34,25 @@ class Beam(BaseModel):
     total_distance: float = 0.0
     total_log_likelihood: float = 0.0
     changes: List[Edit] = []
+    score: float = 0.0
+
+
+def harmonic_mean(beam: Beam, max_distance: float) -> float:
+    # 0~1のスコアで、高いほど良い。
+    # max_distance * 2 にすることで、0.5 ~ 1.0 くらいに収める
+    # distance = max_distance で0になってしまうと、hmeanも0になってしまうからあまり嬉しくない
+    distance_score = 1 - beam.total_distance / (max_distance * 2)
+
+    # (len(beam.original_text) * 2)にすることで、 0.5 ~1.0 を値域とするスコアとする
+    noramlized_match_len = 1 - len(beam.remaining_text) / (len(beam.original_text) * 2)
+    # likelihood = math.exp(beam.total_log_likelihood)
+    # だいたい-1~-100くらいだからという雑な正規化
+    likelihood = 1 - abs(beam.total_log_likelihood) / 100
+    vals = [distance_score, noramlized_match_len, likelihood]
+    vals = [np.clip(v, 0, 1) for v in vals]
+
+    return hmean(vals)
+    return 3 / (1 / distance_score + 1 / noramlized_match_len + 1 / likelihood)
 
 
 class T5SpellCorrector:
@@ -42,11 +64,9 @@ class T5SpellCorrector:
         substitution_cost_fn: Callable[[str, str], float] = lambda str1, str2: 1.0,
         insertion_cost_fn: Callable[[str], float] = lambda _: 1.0,
         deletion_cost_fn: Callable[[str], float] = lambda _: 1.0,
-        score_fn: Callable[[Edit], float] = lambda edit: edit.log_likelihood,
-        filter_fn: Callable[[Edit], bool] = lambda edit: True,
         max_rank: int = 50000,
         add_original_token_to_masked_text: bool = False,
-        beam_size: int = 10,
+        beam_size: int = 5,
     ):
         self.model = MT5ForConditionalGeneration.from_pretrained(model_name)
         for p in self.model.parameters():
@@ -66,8 +86,6 @@ class T5SpellCorrector:
         )(self.beginning_levenshtein.__call__)
 
         self.max_rank = max_rank
-        self.score_fn = score_fn
-        self.filter_fn = filter_fn
         self.add_original_token_to_masked_text = add_original_token_to_masked_text
         self.beam_size = beam_size
 
@@ -106,11 +124,11 @@ class T5SpellCorrector:
                     next_beam_stack.append(possible_beam)
 
             if not beam_stack and next_beam_stack:
-                next_beam_stack.sort(
-                    key=lambda beam: beam.total_log_likelihood, reverse=True
-                )
-
-                beam_stack = next_beam_stack[:beam_size]
+                # パレート最適なビームに絞る
+                beam_stack = self.filter_hopeful_beams(next_beam_stack)
+                # パレート最適な候補がbeam_sizeより多い場合、調和平均の高いものから選ぶ
+                beam_stack.sort(key=lambda b: b.score, reverse=True)
+                beam_stack = beam_stack[:beam_size]
                 next_beam_stack = []
 
         return beam_finished
@@ -118,6 +136,7 @@ class T5SpellCorrector:
     def _get_beam_status(self, beam: Beam) -> str:
         if beam.total_distance > self.max_total_distance:
             return OVEREDIT
+        # TODO: 全部マッチしたら終了だと末尾にinsertできない
         elif len(beam.remaining_text) == 0:
             return FINISHED
         else:
@@ -127,24 +146,21 @@ class T5SpellCorrector:
         beam = beam.copy(deep=True)
         beam.remaining_text = beam.remaining_text[len(edit.text_before) :]
         beam.filled_text += edit.text_after
-        beam.total_distance = self.beginning_levenshtein.distance(
-            beam.filled_text, beam.original_text
-        )
+        if beam.remaining_text:
+            beam.total_distance = self.beginning_levenshtein.distance(
+                beam.filled_text, beam.original_text
+            )
+        else:
+            beam.total_distance = self.beginning_levenshtein.weighted_levenshtein.distance(
+                beam.filled_text, beam.original_text
+            )
+        # TODO: status==FINISHED の場合、次の単語がEOSであるという尤度の計算が抜けているので追加する。
         beam.total_log_likelihood += edit.log_likelihood
         beam.changes.append(edit)
+        beam.score = harmonic_mean(beam, self.max_total_distance)
         return beam
 
     def calc_possible_edits(self, beam: Beam) -> List[Edit]:
-        # if beam.total_distance == self.max_total_distance:
-        #     # TODO: 終わることに対する尤度をちゃんと出す
-        #     return [
-        #         Edit(
-        #             text_after=beam.remaining_text,
-        #             text_before=beam.remaining_text,
-        #             distance=0,
-        #         )
-        #     ]
-
         batch = self.tokenizer.prepare_seq2seq_batch(
             src_texts=[beam.masked_text],
             tgt_texts=["<pad> <extra_id_0>" + beam.filled_text],
@@ -191,9 +207,6 @@ class T5SpellCorrector:
             # 計算量を減らすために尤度が低いものは足切り
             if rank >= self.max_rank:
                 break
-
-        possible_edits = filter(self.filter_fn, possible_edits)
-        possible_edits = sorted(possible_edits, key=self.score_fn, reverse=True)
         return possible_edits
 
     def take_beam_step(self, beam: Beam) -> List[Beam]:
@@ -235,3 +248,25 @@ class T5SpellCorrector:
             hopeful_edit = max(filtered_edits, key=lambda edit: edit.log_likelihood)
             hopeful_edits.append(hopeful_edit)
         return hopeful_edits
+
+    def filter_hopeful_beams(self, beams: List[Beam]) -> List[Beam]:
+        # 編集距離は短いほどよい
+        unique_distances = sorted(set([b.total_distance for b in beams]))
+        # まだマッチしていない長さは短いほどいい (=マッチしている長さは長いほど良い)
+        unique_remaining_len = sorted(set([len(b.remaining_text) for b in beams]))
+
+        # パレート最適なビームを取得
+        pareto_optimal_beams = []
+        for distance, remaining_len in product(unique_distances, unique_remaining_len):
+            filtered_beams = list(
+                filter(
+                    lambda beam: len(beam.remaining_text) == remaining_len
+                    and beam.total_distance == distance,
+                    beams,
+                )
+            )
+            if filtered_beams:
+                pareto_optimal_beams.append(
+                    max(filtered_beams, key=lambda beam: beam.total_log_likelihood)
+                )
+        return pareto_optimal_beams
