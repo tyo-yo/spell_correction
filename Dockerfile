@@ -11,9 +11,9 @@ RUN apt-get update && apt-get install -y \
     libbz2-dev libdb-dev \
     libreadline-dev libffi-dev libgdbm-dev liblzma-dev \
     libncursesw5-dev libsqlite3-dev libssl-dev \
-    zlib1g-dev uuid-dev tk-dev
-# mecab \
-# libmecab-dev \
+    zlib1g-dev uuid-dev tk-dev \
+    mecab \
+    libmecab-dev
 
 # Install Python
 RUN wget https://www.python.org/ftp/python/3.7.10/Python-3.7.10.tgz && \
@@ -30,7 +30,9 @@ RUN ln -s python3.7 python
 
 
 # Python の依存ライブラリ管理ツールpoetryをインストール
-WORKDIR /tmp/
+ENV WORKDIR /tmp/
+WORKDIR ${WORKDIR}
+
 RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 -
 ENV PATH $PATH:/root/.poetry/bin
 RUN poetry config virtualenvs.create false
