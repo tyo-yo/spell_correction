@@ -19,23 +19,24 @@ RUN apt-get update && apt-get install -y \
 RUN wget https://www.python.org/ftp/python/3.7.10/Python-3.7.10.tgz && \
     tar xvf Python-3.7.10.tgz
 
-WORKDIR /tmp/Python-3.7.10
+WORKDIR /tmp/Python-3.7.10/
 RUN ./configure && \
     make && \
     make install
 
-WORKDIR /usr/local/bin
+WORKDIR /usr/local/bin/
 RUN ln -s python3.7 python
+# Install Python End
 
-WORKDIR /tmp
 
 # Python の依存ライブラリ管理ツールpoetryをインストール
+WORKDIR /tmp/
 RUN curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 -
 ENV PATH $PATH:/root/.poetry/bin
 RUN poetry config virtualenvs.create false
 COPY poetry.lock pyproject.toml ${WORKDIR}
+# End Install Poetry and Python Pacages
 
-# FROM builder as development
 RUN poetry install --no-root
 # 依存ライブラリのみをインストールし、rootパッケージはインストールしていない
 # 明示的に--no-rootをつけているが、rootパッケージ以下をCOPYしてないからこのオプションをつけていなくても結果は同じになる
