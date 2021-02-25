@@ -5,7 +5,7 @@ description = ""
 authors = ["Tomoaki Nakamura <tyo_yo@icloud.com>"]
 
 [tool.poetry.dependencies]
-python = "3.7.6"
+python = "^3.7"
 streamlit = "^0.72.0"
 smart_open = {extras = ["all"], version = "^4.0.1"}
 directory_tree = "^0.0.2"
@@ -19,7 +19,8 @@ sudachidict_core = "^20200722"
 comet_ml = "^3.2.9"
 python-Levenshtein = "^0.12.0"
 mecab-python3 = "^1.0.3"
-unidic-lite = "^1.0.7"
+strsimpy = "^0.2.0"
+pydantic = "^1.7.3"
 
 [tool.poetry.dev-dependencies]
 jupyterlab = "^2.2.9"
