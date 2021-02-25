@@ -5,7 +5,7 @@ description = ""
 authors = ["Tomoaki Nakamura <tyo_yo@icloud.com>"]
 
 [tool.poetry.dependencies]
-python = "3.7.6"
+python = "^3.7"
 streamlit = "^0.72.0"
 smart_open = {extras = ["all"], version = "^4.0.1"}
 directory_tree = "^0.0.2"
