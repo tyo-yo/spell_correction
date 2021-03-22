@@ -47,7 +47,8 @@ RUN poetry install --no-root
 # jupyter上でhboxを表示するため
 # https://stackoverflow.com/questions/57343134/jupyter-notebooks-not-displaying-progress-bars
 # https://qiita.com/seibe/items/36cef7df85fe2cefa3ea
-RUN apt update & apt install -y nodejs npm ;\
+RUN apt-get update & apt-get install -y nodejs ;\
+    apt-get install -y npm ;\
     npm install n -g ;\
     n stable ;\
     apt purge -y nodejs npm ;\
