@@ -55,4 +55,7 @@ RUN apt-get update & apt-get install -y nodejs ;\
     jupyter nbextension enable --py widgetsnbextension ;\
     jupyter labextension install @jupyter-widgets/jupyterlab-manager
 
+# Install gsutil
+# https://cloud.google.com/storage/docs/gsutil_install?hl=ja
+RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg  add - && apt-get update -y && apt-get install google-cloud-sdk -y
 
