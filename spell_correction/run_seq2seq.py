@@ -215,6 +215,8 @@ class DataTrainingArguments:
         },
     )
 
+    prefix: str = ""
+
     def __post_init__(self):
         if (
             self.dataset_name is None
@@ -401,6 +403,7 @@ def main():
     def preprocess_function(examples, max_target_length=None):
         max_target_length = max_target_length or data_args.max_target_length
         input_texts = examples[data_args.src_column]
+        input_texts = [data_args.prefix + t for t in input_texts]
         targets = examples[data_args.tgt_column]
         model_inputs = tokenizer(
             input_texts,
@@ -484,12 +487,10 @@ def main():
         )
 
     # Metric
-    metric_name = "accuracy"
+    metric_name = "./spell_correction/hf_ja_seq2seq_metric.py"
     metric = load_metric(metric_name)
 
     def postprocess_text(preds, labels):
-        # answer_candidatesを入力できないので、get_nearest_candidate()を使えない
-        # testの出力をファイルで書き出した後に、適宜後処理する
         preds = [pred.strip() for pred in preds]
         labels = [label.strip() for label in labels]
 
