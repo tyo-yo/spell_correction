@@ -316,17 +316,23 @@ def main():
         # Downloading and loading a dataset from the hub.
         datasets = load_dataset(data_args.dataset_name, data_args.dataset_config_name)
     else:
-        data_files = {}
+        # datasets.DatasetDict 型としないのは、testファイルだけカラム数が違ったりするとロードに失敗するため
+        datasets = {}
         if data_args.train_file is not None:
-            data_files["train"] = data_args.train_file
             extension = data_args.train_file.split(".")[-1]
+            datasets["train"] = load_dataset(
+                extension, data_files=data_args.train_file
+            )["train"]
         if data_args.validation_file is not None:
-            data_files["validation"] = data_args.validation_file
             extension = data_args.validation_file.split(".")[-1]
+            datasets["validation"] = load_dataset(
+                extension, data_files=data_args.validation_file
+            )["train"]
         if data_args.test_file is not None:
-            data_files["test"] = data_args.test_file
             extension = data_args.test_file.split(".")[-1]
-        datasets = load_dataset(extension, data_files=data_files)
+            datasets["test"] = load_dataset(extension, data_files=data_args.test_file)[
+                "train"
+            ]
     # See more about loading any type of standard or custom dataset (from files, python dict, pandas DataFrame, etc) at
     # https://huggingface.co/docs/datasets/loading_datasets.html.
 
