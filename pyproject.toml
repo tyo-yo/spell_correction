@@ -26,6 +26,7 @@ transformers = "^4.4.2"
 [tool.poetry.dev-dependencies]
 jupyterlab = "^2.2.9"
 pytest-profiling = "^1.7.0"
+black = {version = "^20.8b1", allow-prereleases = true}
 
 [tool.poetry.extras]
 deepspeed = ["deepspeed"]
