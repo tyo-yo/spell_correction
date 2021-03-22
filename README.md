@@ -50,18 +50,23 @@ All results are automatically uploaded to Comet.ml
 
 Also, manually uploaded to Google Storage
 ```
-gsutil rsync -r experiments gs://tyoyo/experiments/
+gsutil -m rsync -r experiments gs://tyoyo/experiments/
+
+# Download
+gsutil -m rsync -r gs://tyoyo/jwtd data/jwtd/
+gsutil -m rsync -r gs://tyoyo/spell_correction/data/ data/
 ```
 
 
 ```
-run_name="000-mt5-large"; deepspeed spell_correction/run_seq2seq.py \
+run_name="000-mt5-large-supervised"; deepspeed spell_correction/run_seq2seq.py \
    --model_name_or_path "google/mt5-large" \
    --output_dir ./experiments/$run_name \
    --logging_dir ./experiments/$run_name/logs \
    --run_name $run_name \
    --do_train \
    --do_eval \
+   --do_predict \
    --evaluation_strategy "epoch" \
    --prediction_loss_only \
    --per_device_train_batch_size 16 \
@@ -69,7 +74,7 @@ run_name="000-mt5-large"; deepspeed spell_correction/run_seq2seq.py \
    --learning_rate 1e-5 \
    --weight_decay 0 \
    --adam_epsilon 1e-8 \
-   --num_train_epochs 5.0 \
+   --num_train_epochs 20.0 \
    --lr_scheduler_type "linear" \
    --warmup_steps 100 \
    --save_total_limit 10 \
@@ -79,16 +84,16 @@ run_name="000-mt5-large"; deepspeed spell_correction/run_seq2seq.py \
    --metric_for_best_model "loss" \
    --greater_is_better false \
    --deepspeed "ds_config.json" \
-   --train_file "data/jwtd/1.1.0/train.json" \
-   --validation_file "data/jwtd/1.1.0/validation.json" \
-   --test_file "data/jwtd/1.1.0/test.json" \
+   --train_file "data/jwtd/v2.1/train.json" \
+   --validation_file "data/jwtd/v2.1/validation.json" \
+   --test_file "data/jwtd/v2.1/test.json" \
    --preprocessing_num_workers 8 \
-   --max_source_length 64 \
-   --max_target_length 16 \
+   --max_source_length 128 \
+   --max_target_length 128 \
    --ignore_pad_token_for_loss \
    --num_beams 4 \
-   --src_column "question" \
-   --tgt_column "answer_entity" \
-   --dropout_rate 0.3
+   --src_column "pre_text" \
+   --tgt_column "post_text" \
+   --dropout_rate 0.1
 
 ```
