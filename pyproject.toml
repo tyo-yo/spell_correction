@@ -14,17 +14,19 @@ flatten-dict = "^0.3.0"
 chardiff_html = "^0.1.1"
 allennlp = "^1.3.0"
 allennlp-models = "^1.3.0"
-sudachipy = "^0.4.9"
-sudachidict_core = "^20200722"
 comet_ml = "^3.2.9"
 python-Levenshtein = "^0.12.0"
 mecab-python3 = "^1.0.3"
 strsimpy = "^0.2.0"
 pydantic = "^1.7.3"
+deepspeed = {version = "^0.3.11", optional = true}
 
 [tool.poetry.dev-dependencies]
 jupyterlab = "^2.2.9"
 pytest-profiling = "^1.7.0"
+
+[tool.poetry.extras]
+deepspeed = ["deepspeed"]
 
 [tool.pytest.ini_options]
 python_paths = "./"
